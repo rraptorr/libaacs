@@ -717,6 +717,7 @@ static int _get_bus_encryption_enabled(const char *path)
         return bee;
     } else {
         DEBUG(DBG_AACS | DBG_CRIT, "Failed to read 2 bytes from content certificate file\n");
+        file_close(fp);
         return 0;
     }
 }
