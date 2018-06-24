@@ -431,7 +431,7 @@ static int _verify_signature(const uint8_t *cert, const uint8_t *signature,
     memcpy(data,      nonce, 20);
     memcpy(data + 20, point, 40);
 
-    return crypto_aacs_verify(cert, signature, data, 60);
+    return crypto_aacs_verify(cert, signature, data, 60, 1);
 }
 
 static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, const uint8_t *host_cert, uint8_t *bus_key)
@@ -471,7 +471,7 @@ static int _mmc_aacs_auth(MMC *mmc, uint8_t agid, const uint8_t *host_priv_key, 
     }
 
     // verify drive certificate
-    if (!crypto_aacs_verify_drive_cert(mmc->drive_cert)) {
+    if (!crypto_aacs_verify_drive_cert(mmc->drive_cert, 1)) {
         BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
         return MMC_ERROR;
     }
@@ -679,7 +679,7 @@ int mmc_read_drive_cert(MMC *mmc, uint8_t *drive_cert)
         return MMC_ERROR;
     }
 
-    if (!crypto_aacs_verify_drive_cert(buf + 4)) {
+    if (!crypto_aacs_verify_drive_cert(buf + 4, 1)) {
         BD_DEBUG(DBG_MMC | DBG_CRIT, "Drive certificate is invalid\n");
         return MMC_ERROR;
     }

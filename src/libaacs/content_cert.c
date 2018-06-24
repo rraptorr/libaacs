@@ -40,7 +40,7 @@ CONTENT_CERT *cc_parse(const void *data, size_t len)
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid content certificate (length %zd < 87)\n", len);
         return NULL;
     }
-    if (p[0] != 0) {
+    if (p[0] != 0 && p[0] != 0x10) {
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid content certificate type 0x%02x\n", p[0]);
         return NULL;
     }
@@ -52,17 +52,24 @@ CONTENT_CERT *cc_parse(const void *data, size_t len)
 
     size_t cert_data_len = 26 + length_format_specific + num_digest*8;
 
-    if (len < cert_data_len + 40) {
+    if (len < cert_data_len + (p[0] == 0 ? 40 : 64)) {
         BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid content certificate (length %zd < %zd)\n",
-                 len, cert_data_len + 40);
+                 len, cert_data_len + (p[0] == 0 ? 40 : 64));
         return NULL;
     }
 
     /* check signature */
 
-    if (!crypto_aacs_verify_aacscc(p + cert_data_len, p, cert_data_len)) {
-        BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid content certificate signature\n");
-        return NULL;
+    if (p[0] == 0) {
+        if (!crypto_aacs_verify_aacscc(p + cert_data_len, p, cert_data_len, 1)) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid content certificate signature\n");
+            return NULL;
+        }
+    } else {
+        if (!crypto_aacs_verify_aacscc(p + cert_data_len, p, cert_data_len, 2)) {
+            BD_DEBUG(DBG_AACS | DBG_CRIT, "Invalid content certificate signature\n");
+            return NULL;
+        }
     }
 
     /* return useful data */
